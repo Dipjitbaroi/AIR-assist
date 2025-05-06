@@ -34,11 +34,23 @@
             position: relative;
             z-index: 10;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .header h1 {
             font-size: 24px;
             font-weight: 600;
+            margin: 0 auto;
+        }
+        
+        .icon-button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 8px;
+            cursor: pointer;
         }
         
         .main-container {
@@ -47,6 +59,34 @@
             flex-direction: column;
             padding: 16px;
             overflow: hidden;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #0062cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
         }
         
         .status-panel {
@@ -104,6 +144,7 @@
             border-radius: 18px;
             margin-bottom: 12px;
             word-wrap: break-word;
+            position: relative;
         }
         
         .user-message {
@@ -116,6 +157,12 @@
             align-self: flex-start;
             background-color: #e9e9eb;
             color: #333;
+        }
+        
+        .message-timestamp {
+            font-size: 10px;
+            margin-top: 4px;
+            opacity: 0.7;
         }
         
         .controls-panel {
@@ -190,6 +237,109 @@
             }
         }
 
+        .visualizer-container {
+            height: 60px;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .visualizer-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 100;
+            padding: 16px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .settings-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .setting-item label {
+            font-weight: 600;
+        }
+        
+        .setting-item input[type="text"],
+        .setting-item select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .setting-item input[type="range"] {
+            width: 100%;
+        }
+        
+        .setting-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #closeSettingsButton {
+            background-color: #ff3b30;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+        
+        #saveSettingsButton {
+            background-color: #34c759;
+            margin-top: 20px;
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        .offline-badge {
+            background-color: #ff3b30;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 8px;
+            display: none;
+        }
+        
         @media (max-width: 390px) {
             .header h1 {
                 font-size: 20px;
@@ -209,27 +359,51 @@
                 padding: 14px;
                 font-size: 14px;
             }
+            
+            .setting-item {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>AIRAssist</h1>
+        <div></div> <!-- Empty div for flex spacing -->
+        <h1>AIRAssist <span class="offline-badge" id="offlineBadge">OFFLINE</span></h1>
+        <button id="settingsButton" class="icon-button" aria-label="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
     </div>
     
     <div class="main-container">
+        <div class="user-profile" id="userProfile">
+            <div class="user-avatar" id="userAvatar">
+                <span id="userInitials">?</span>
+            </div>
+            <div class="user-info">
+                <span id="userName">Guest User</span>
+            </div>
+        </div>
+        
         <div class="status-panel">
             <div class="status-item">
-                <div id="bluetoothStatus" class="status-icon status-disconnected"></div>
+                <div id="bluetoothStatus" class="status-icon status-disconnected" role="status"></div>
                 <div id="bluetoothStatusText" class="status-text">Bluetooth: Disconnected</div>
             </div>
             <div class="status-item">
-                <div id="n8nStatus" class="status-icon status-disconnected"></div>
+                <div id="n8nStatus" class="status-icon status-disconnected" role="status"></div>
                 <div id="n8nStatusText" class="status-text">n8n Connection: Disconnected</div>
             </div>
         </div>
         
-        <div class="conversation-panel" id="conversationPanel">
+        <div class="visualizer-container" id="visualizerContainer">
+            <canvas id="visualizerCanvas" class="visualizer-canvas"></canvas>
+        </div>
+        
+        <div class="conversation-panel" id="conversationPanel" role="log" aria-live="polite">
             <!-- Messages will appear here -->
         </div>
         
@@ -252,6 +426,50 @@
             </button>
         </div>
     </div>
+    
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h2>Settings</h2>
+            <button id="closeSettingsButton">Close</button>
+        </div>
+        
+        <div class="settings-content">
+            <div class="setting-item">
+                <label for="userName">Your Name:</label>
+                <input type="text" id="userNameInput" placeholder="Enter your name">
+            </div>
+            
+            <div class="setting-item">
+                <label for="autoListenToggle">Auto-stop listening:</label>
+                <input type="checkbox" id="autoListenToggle" checked>
+            </div>
+            
+            <div class="setting-item">
+                <label for="silenceThreshold">Silence threshold:</label>
+                <div class="setting-input-group">
+                    <input type="range" id="silenceThreshold" min="5" max="30" value="15">
+                    <span id="silenceThresholdValue">15</span>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <label for="n8nServerUrl">n8n Server URL:</label>
+                <input type="text" id="n8nServerUrl" placeholder="https://your-n8n-instance.com/webhook/ai-assistant">
+            </div>
+            
+            <div class="setting-item">
+                <label for="aiVoice">AI Voice:</label>
+                <select id="aiVoice">
+                    <option value="default">Default</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="robotic">Robotic</option>
+                </select>
+            </div>
+            
+            <button id="saveSettingsButton">Save Settings</button>
+        </div>
+    </div>
 
     <script>
         // Service Worker Registration
@@ -268,7 +486,7 @@
         }
 
         // Configuration - Replace with your actual n8n webhook URL
-        const N8N_WEBHOOK_URL = 'https://your-n8n-instance.com/webhook/ai-assistant';
+        let N8N_WEBHOOK_URL = 'https://your-n8n-instance.com/webhook/ai-assistant';
         
         // DOM Elements
         const bluetoothStatus = document.getElementById('bluetoothStatus');
@@ -278,6 +496,16 @@
         const conversationPanel = document.getElementById('conversationPanel');
         const connectButton = document.getElementById('connectButton');
         const listenButton = document.getElementById('listenButton');
+        const settingsButton = document.getElementById('settingsButton');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const closeSettingsButton = document.getElementById('closeSettingsButton');
+        const saveSettingsButton = document.getElementById('saveSettingsButton');
+        const offlineBadge = document.getElementById('offlineBadge');
+        const visualizerContainer = document.getElementById('visualizerContainer');
+        const visualizerCanvas = document.getElementById('visualizerCanvas');
+        const userNameElement = document.getElementById('userName');
+        const userInitialsElement = document.getElementById('userInitials');
+        const userNameInput = document.getElementById('userNameInput');
         
         // Variables
         let bluetoothDevice = null;
@@ -292,6 +520,42 @@
         let audioStream = null;
         let isConnectedToN8n = false;
         let audioSinkNode = null;
+        let silenceCounter = 0;
+        let voiceDetector = null;
+        let analyser = null;
+        let animationFrameId = null;
+        let visualizerContext = null;
+        let settings = {
+            autoListen: true,
+            silenceThreshold: 15,
+            n8nServerUrl: N8N_WEBHOOK_URL,
+            aiVoice: 'default',
+            userName: 'Guest User'
+        };
+        
+        // Check network connectivity and update UI
+        function updateOfflineStatus() {
+            if (!navigator.onLine) {
+                offlineBadge.style.display = 'inline-block';
+            } else {
+                offlineBadge.style.display = 'none';
+            }
+        }
+        
+        // Announce to screen reader
+        function announceToScreenReader(message) {
+            const announcer = document.createElement('div');
+            announcer.setAttribute('aria-live', 'assertive');
+            announcer.setAttribute('class', 'sr-only');
+            announcer.textContent = message;
+            
+            document.body.appendChild(announcer);
+            
+            // Remove after announcement is made
+            setTimeout(() => {
+                document.body.removeChild(announcer);
+            }, 1000);
+        }
         
         // Check n8n connection
         async function checkN8nConnection() {
@@ -330,6 +594,9 @@
                 bluetoothStatus.classList.add('status-waiting');
                 bluetoothStatusText.textContent = 'Bluetooth: Searching...';
                 
+                // Announce to screen reader
+                announceToScreenReader('Searching for Bluetooth devices');
+                
                 // Request Bluetooth device with audio service
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
                     filters: [
@@ -339,7 +606,8 @@
                         '0000110a-0000-1000-8000-00805f9b34fb',  // A2DP Source
                         '00001108-0000-1000-8000-00805f9b34fb',  // HSP/HFP
                         '00001131-0000-1000-8000-00805f9b34fb',  // Hands-Free Voice Gateway
-                        '0000111e-0000-1000-8000-00805f9b34fb'   // Hands-Free
+                        '0000111e-0000-1000-8000-00805f9b34fb',  // Hands-Free
+                        '00001132-0000-1000-8000-00805f9b34fb'   // Advanced Audio Distribution
                     ]
                 });
                 
@@ -349,13 +617,29 @@
                 gattServer = await bluetoothDevice.gatt.connect();
                 
                 // Try to connect to the audio service
-                try {
+                const supportedProfiles = [
+                    '0000110b-0000-1000-8000-00805f9b34fb', // A2DP Sink
+                    '0000110a-0000-1000-8000-00805f9b34fb', // A2DP Source
+                    '00001108-0000-1000-8000-00805f9b34fb', // HSP/HFP
+                    '0000111e-0000-1000-8000-00805f9b34fb', // Hands-Free
+                    '00001132-0000-1000-8000-00805f9b34fb'  // Advanced Audio Distribution
+                ];
+                
+                // Try to get the first available audio service
+                let serviceFound = false;
+                for (const profile of supportedProfiles) {
+                    try {
+                        audioService = await gattServer.getPrimaryService(profile);
+                        console.log(`Connected to audio profile: ${profile}`);
+                        serviceFound = true;
+                        break;
+                    } catch (e) {
+                        console.log(`Failed to connect to profile ${profile}`);
+                    }
+                }
+                
+                if (!serviceFound) {
                     audioService = await gattServer.getPrimaryService('0000110b-0000-1000-8000-00805f9b34fb');
-                    // For A2DP, we would need to get the characteristic for sending audio
-                    // This is simplified - actual A2DP implementation is more complex
-                } catch (error) {
-                    console.log('A2DP service not available, trying HSP/HFP');
-                    audioService = await gattServer.getPrimaryService('00001108-0000-1000-8000-00805f9b34fb');
                 }
                 
                 // Update status
@@ -369,12 +653,19 @@
                 // Listen for disconnect events
                 bluetoothDevice.addEventListener('gattserverdisconnected', onBluetoothDisconnected);
                 
+                // Announce to screen reader
+                announceToScreenReader('Bluetooth connected to ' + bluetoothDevice.name);
+                
                 return true;
             } catch (error) {
                 console.error('Bluetooth connection error:', error);
                 bluetoothStatus.classList.remove('status-waiting', 'status-connected');
                 bluetoothStatus.classList.add('status-disconnected');
                 bluetoothStatusText.textContent = 'Bluetooth: Connection Failed';
+                
+                // Announce to screen reader
+                announceToScreenReader('Bluetooth connection failed');
+                
                 return false;
             }
         }
@@ -392,12 +683,106 @@
             if (isListening) {
                 stopListening();
             }
+            
+            // Announce to screen reader
+            announceToScreenReader('Bluetooth disconnected');
         }
         
         // Initialize audio context
         function initAudioContext() {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
             return audioContext;
+        }
+        
+        // Setup voice activity detection
+        function setupVoiceActivityDetection(stream) {
+            if (!audioContext) {
+                initAudioContext();
+            }
+            
+            analyser = audioContext.createAnalyser();
+            const microphone = audioContext.createMediaStreamSource(stream);
+            const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+            
+            analyser.smoothingTimeConstant = 0.8;
+            analyser.fftSize = 1024;
+            
+            microphone.connect(analyser);
+            analyser.connect(scriptProcessor);
+            scriptProcessor.connect(audioContext.destination);
+            
+            // Setup visualizer
+            setupVisualizer();
+            
+            scriptProcessor.onaudioprocess = function() {
+                const array = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(array);
+                const arraySum = array.reduce((a, value) => a + value, 0);
+                const average = arraySum / array.length;
+                
+                // If settings.autoListen is true, detect silence
+                if (settings.autoListen && average < settings.silenceThreshold && isListening) {
+                    silenceCounter++;
+                    
+                    // If silent for more than 2 seconds, stop listening
+                    if (silenceCounter > 100) {
+                        stopListening();
+                    }
+                } else {
+                    silenceCounter = 0;
+                }
+            };
+            
+            return {
+                stop: function() {
+                    microphone.disconnect();
+                    scriptProcessor.disconnect();
+                    analyser.disconnect();
+                    cancelAnimationFrame(animationFrameId);
+                    visualizerContainer.style.display = 'none';
+                }
+            };
+        }
+        
+        // Setup audio visualizer
+        function setupVisualizer() {
+            visualizerContext = visualizerCanvas.getContext('2d');
+            visualizerContainer.style.display = 'block';
+            
+            // Ensure canvas size matches container
+            visualizerCanvas.width = visualizerContainer.clientWidth;
+            visualizerCanvas.height = visualizerContainer.clientHeight;
+            
+            function drawVisualizer() {
+                animationFrameId = requestAnimationFrame(drawVisualizer);
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyser.getByteFrequencyData(dataArray);
+                
+                visualizerContext.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+                visualizerContext.fillStyle = '#007aff';
+                
+                const barWidth = (visualizerCanvas.width / bufferLength) * 2.5;
+                let x = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = dataArray[i] / 2;
+                    
+                    visualizerContext.fillRect(
+                        x,
+                        visualizerCanvas.height - barHeight,
+                        barWidth,
+                        barHeight
+                    );
+                    
+                    x += barWidth + 1;
+                }
+            }
+            
+            drawVisualizer();
         }
         
         // Start listening for user voice input
@@ -428,6 +813,9 @@
                 mediaRecorder.start();
                 isListening = true;
                 
+                // Setup voice activity detection
+                voiceDetector = setupVoiceActivityDetection(audioStream);
+                
                 // Update UI
                 listenButton.classList.add('listening', 'pulse-animation');
                 listenButton.innerHTML = `
@@ -442,10 +830,17 @@
                 // Add user message indicating listening
                 addMessage('I\'m listening...', 'ai');
                 
+                // Announce to screen reader
+                announceToScreenReader('Listening started');
+                
                 return true;
             } catch (error) {
                 console.error('Error starting microphone:', error);
                 addMessage('Failed to access microphone. Please check permissions.', 'ai');
+                
+                // Announce to screen reader
+                announceToScreenReader('Failed to access microphone');
+                
                 return false;
             }
         }
@@ -467,11 +862,59 @@
                     Start Listening
                 `;
                 
+                // Stop voice activity detection
+                if (voiceDetector) {
+                    voiceDetector.stop();
+                    voiceDetector = null;
+                }
+                
                 // Close audio stream tracks
                 if (audioStream) {
                     audioStream.getTracks().forEach(track => track.stop());
                     audioStream = null;
                 }
+                
+                // Announce to screen reader
+                announceToScreenReader('Listening stopped');
+            }
+        }
+        
+        // Format timestamp
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        
+        // Add message to conversation panel
+        function addMessage(text, sender, id = null, timestamp = Date.now()) {
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('message');
+            messageEl.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
+            
+            const messageText = document.createElement('div');
+            messageText.textContent = text;
+            messageEl.appendChild(messageText);
+            
+            const messageTimestamp = document.createElement('div');
+            messageTimestamp.classList.add('message-timestamp');
+            messageTimestamp.textContent = formatTimestamp(timestamp);
+            messageEl.appendChild(messageTimestamp);
+            
+            if (id) {
+                messageEl.id = id;
+            }
+            
+            conversationPanel.appendChild(messageEl);
+            conversationPanel.scrollTop = conversationPanel.scrollHeight;
+        }
+        
+        // Update message text
+        function updateMessage(id, text) {
+            const messageEl = document.getElementById(id);
+            if (messageEl) {
+                messageEl.firstChild.textContent = text;
             }
         }
         
@@ -481,44 +924,144 @@
                 // Create audio blob
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 
-                // Create FormData
-                const formData = new FormData();
-                formData.append('audio', audioBlob, 'recording.webm');
-                
                 // Add user message with loading state
                 const messageId = 'msg-' + Date.now();
                 addMessage('Processing...', 'user', messageId);
                 
-                // Send to n8n
-                const response = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    body: formData,
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
+                // Check if online and n8n is available
+                if (navigator.onLine && (isConnectedToN8n || await checkN8nConnection())) {
+                    // Create FormData
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob, 'recording.webm');
+                    formData.append('voice', settings.aiVoice);
                     
-                    // Update user message with transcription
-                    if (data.transcription) {
-                        updateMessage(messageId, data.transcription);
-                    }
+                    // Send to n8n
+                    const response = await fetch(N8N_WEBHOOK_URL, {
+                        method: 'POST',
+                        body: formData,
+                    });
                     
-                    // Add AI response message
-                    if (data.response) {
-                        addMessage(data.response.text, 'ai');
+                    if (response.ok) {
+                        const data = await response.json();
                         
-                        // Play audio response if available
-                        if (data.response.audioUrl) {
-                            playAudioResponse(data.response.audioUrl);
+                        // Update user message with transcription
+                        if (data.transcription) {
+                            updateMessage(messageId, data.transcription);
                         }
+                        
+                        // Add AI response message
+                        if (data.response) {
+                            addMessage(data.response.text, 'ai');
+                            
+                            // Play audio response if available
+                            if (data.response.audioUrl) {
+                                playAudioResponse(data.response.audioUrl);
+                            }
+                        }
+                    } else {
+                        throw new Error('Failed to process audio');
                     }
                 } else {
-                    throw new Error('Failed to process audio');
+                    // We're offline or n8n is unavailable
+                    // Store the audio for later processing
+                    const pendingRequests = JSON.parse(localStorage.getItem('pendingRequests') || '[]');
+                    
+                    // Convert blob to base64 for storage
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = function() {
+                        const base64data = reader.result;
+                        
+                        // Store pending request
+                        pendingRequests.push({
+                            timestamp: Date.now(),
+                            audio: base64data,
+                            messageId: messageId
+                        });
+                        
+                        localStorage.setItem('pendingRequests', JSON.stringify(pendingRequests));
+                        
+                        // Update user message with transcription placeholder
+                        updateMessage(messageId, "Your message (saved for offline processing)");
+                        
+                        // Add AI offline response
+                        const offlineResponses = [
+                            "I'm currently offline but I'll remember this when I reconnect.",
+                            "I'm working in offline mode right now. I'll sync this when we're back online.",
+                            "Network connection unavailable. I've saved your message for later processing.",
+                            "I can't reach the server right now, but I've stored your request."
+                        ];
+                        const randomResponse = offlineResponses[Math.floor(Math.random() * offlineResponses.length)];
+                        addMessage(randomResponse, 'ai');
+                    };
                 }
             } catch (error) {
                 console.error('Error sending audio to n8n:', error);
                 addMessage('Sorry, I couldn\'t process your request.', 'ai');
             }
+        }
+        
+        // Process pending requests
+        async function processPendingRequests() {
+            if (!navigator.onLine || !(isConnectedToN8n || await checkN8nConnection())) {
+                return; // Still offline
+            }
+            
+            const pendingRequests = JSON.parse(localStorage.getItem('pendingRequests') || '[]');
+            if (pendingRequests.length === 0) {
+                return; // No pending requests
+            }
+            
+            addMessage('Processing your offline messages...', 'ai');
+            
+            // Process each pending request
+            for (const request of pendingRequests) {
+                try {
+                    // Convert base64 back to blob
+                    const byteString = atob(request.audio.split(',')[1]);
+                    const mimeString = request.audio.split(',')[0].split(':')[1].split(';')[0];
+                    const ab = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(ab);
+                    
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+                    
+                    const blob = new Blob([ab], { type: mimeString });
+                    
+                    // Create FormData
+                    const formData = new FormData();
+                    formData.append('audio', blob, 'recording.webm');
+                    formData.append('offlineTimestamp', request.timestamp);
+                    formData.append('voice', settings.aiVoice);
+                    
+                    // Send to n8n
+                    const response = await fetch(N8N_WEBHOOK_URL, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Update user message with transcription
+                        if (data.transcription) {
+                            updateMessage(request.messageId, data.transcription);
+                        }
+                        
+                        // Add AI response message
+                        if (data.response) {
+                            addMessage(data.response.text, 'ai', null, request.timestamp);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error processing offline request:', error);
+                }
+            }
+            
+            // Clear processed requests
+            localStorage.removeItem('pendingRequests');
+            addMessage('All offline messages processed!', 'ai');
         }
         
         // Play audio response through Bluetooth device
@@ -554,26 +1097,78 @@
             }
         }
         
-        // Add message to conversation panel
-        function addMessage(text, sender, id = null) {
-            const messageEl = document.createElement('div');
-            messageEl.classList.add('message');
-            messageEl.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
-            messageEl.textContent = text;
-            
-            if (id) {
-                messageEl.id = id;
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('airassistSettings');
+            if (savedSettings) {
+                settings = JSON.parse(savedSettings);
+                
+                // Update UI
+                document.getElementById('autoListenToggle').checked = settings.autoListen;
+                document.getElementById('silenceThreshold').value = settings.silenceThreshold;
+                document.getElementById('silenceThresholdValue').textContent = settings.silenceThreshold;
+                document.getElementById('n8nServerUrl').value = settings.n8nServerUrl;
+                document.getElementById('aiVoice').value = settings.aiVoice;
+                document.getElementById('userNameInput').value = settings.userName;
+                
+                // Update global variable
+                N8N_WEBHOOK_URL = settings.n8nServerUrl;
+                
+                // Update user profile
+                setUserProfile(settings.userName);
             }
-            
-            conversationPanel.appendChild(messageEl);
-            conversationPanel.scrollTop = conversationPanel.scrollHeight;
         }
         
-        // Update message text
-        function updateMessage(id, text) {
-            const messageEl = document.getElementById(id);
-            if (messageEl) {
-                messageEl.textContent = text;
+        // Save settings to localStorage
+        function saveSettings() {
+            settings.autoListen = document.getElementById('autoListenToggle').checked;
+            settings.silenceThreshold = parseInt(document.getElementById('silenceThreshold').value);
+            settings.n8nServerUrl = document.getElementById('n8nServerUrl').value;
+            settings.aiVoice = document.getElementById('aiVoice').value;
+            settings.userName = document.getElementById('userNameInput').value;
+            
+            // Update global variable
+            N8N_WEBHOOK_URL = settings.n8nServerUrl;
+            
+            localStorage.setItem('airassistSettings', JSON.stringify(settings));
+            
+            // Show confirmation
+            addMessage('Settings saved!', 'ai');
+            
+            // Update user profile
+            setUserProfile(settings.userName);
+            
+            // Close settings panel
+            settingsPanel.style.display = 'none';
+            
+            // Announce to screen reader
+            announceToScreenReader('Settings saved');
+        }
+        
+        // Set user profile
+        function setUserProfile(name) {
+            if (name && name.trim() !== '') {
+                userNameElement.textContent = name;
+                userInitialsElement.textContent = name.split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2);
+            }
+        }
+        
+        // Setup user profile
+        function setupUserProfile() {
+            const savedName = localStorage.getItem('userName');
+            
+            if (savedName) {
+                setUserProfile(savedName);
+            } else {
+                // Prompt for name after a delay
+                setTimeout(() => {
+                    settingsPanel.style.display = 'block';
+                    userNameInput.focus();
+                }, 2000);
             }
         }
         
@@ -602,9 +1197,57 @@
             }
         });
         
-        // Add initial message
+        settingsButton.addEventListener('click', () => {
+            settingsPanel.style.display = 'block';
+        });
+        
+        closeSettingsButton.addEventListener('click', () => {
+            settingsPanel.style.display = 'none';
+        });
+        
+        saveSettingsButton.addEventListener('click', saveSettings);
+        
+        document.getElementById('silenceThreshold').addEventListener('input', (e) => {
+            document.getElementById('silenceThresholdValue').textContent = e.target.value;
+        });
+        
+        // Check for online/offline status
+        window.addEventListener('online', () => {
+            updateOfflineStatus();
+            processPendingRequests();
+        });
+        
+        window.addEventListener('offline', updateOfflineStatus);
+        
+        // Initialize app
         window.addEventListener('DOMContentLoaded', () => {
+            // Initial offline status check
+            updateOfflineStatus();
+            
+            // Load saved settings
+            loadSettings();
+            
+            // Setup user profile
+            setupUserProfile();
+            
+            // Add initial message
             addMessage('Hello! I\'m AIRAssist. Connect your Bluetooth earpiece to start.', 'ai');
+            
+            // Check n8n connection
+            checkN8nConnection();
+            
+            // Process any pending offline requests
+            if (navigator.onLine) {
+                processPendingRequests();
+            }
+        });
+        
+        // Handle orientation changes for visualizer
+        window.addEventListener('resize', () => {
+            if (visualizerContext) {
+                visualizerCanvas.width = visualizerContainer.clientWidth;
+                visualizerCanvas.height = visualizerContainer.clientHeight;
+            }
         });
     </script>
 </body>

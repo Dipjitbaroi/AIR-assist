@@ -92,7 +92,87 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Handle push notifications (for future implementation)
+// Background Sync for offline requests
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-messages') {
+    event.waitUntil(syncOfflineMessages());
+  }
+});
+
+// Function to sync offline messages
+async function syncOfflineMessages() {
+  try {
+    // Open IndexedDB
+    const db = await openDatabase();
+    const tx = db.transaction('offline-messages', 'readonly');
+    const store = tx.objectStore('offline-messages');
+    
+    // Get all offline messages
+    const messages = await store.getAll();
+    
+    // Process each message
+    for (const message of messages) {
+      try {
+        // Convert base64 to blob
+        const byteString = atob(message.audio.split(',')[1]);
+        const mimeString = message.audio.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        
+        const blob = new Blob([ab], { type: mimeString });
+        
+        // Create FormData
+        const formData = new FormData();
+        formData.append('audio', blob, 'recording.webm');
+        formData.append('offlineTimestamp', message.timestamp);
+        formData.append('voice', message.voice || 'default');
+        
+        // Send to n8n
+        const response = await fetch(message.url, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (response.ok) {
+          // Remove message from IndexedDB
+          const deleteTx = db.transaction('offline-messages', 'readwrite');
+          const deleteStore = deleteTx.objectStore('offline-messages');
+          await deleteStore.delete(message.id);
+        }
+      } catch (error) {
+        console.error('Error syncing message:', error);
+      }
+    }
+    
+    // Close database
+    db.close();
+  } catch (error) {
+    console.error('Error syncing offline messages:', error);
+  }
+}
+
+// Open IndexedDB
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('airassist-db', 1);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('offline-messages')) {
+        db.createObjectStore('offline-messages', { keyPath: 'id' });
+      }
+    };
+  });
+}
+
+// Handle push notifications
 self.addEventListener('push', (event) => {
   let notificationData = {};
   
@@ -120,7 +200,7 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Handle notification click (for future implementation)
+// Handle notification click
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
