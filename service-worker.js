@@ -1,21 +1,37 @@
-// Service Worker for AIRAssist PWA
+// Service Worker for AIRAssist PWA - iOS Safari Compatible Version
 const CACHE_NAME = 'airassist-cache-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/icons/maskable-icon.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/icon-192x192.png',
+  './icons/icon-512x512.png',
+  './icons/maskable-icon.png',
+  './iOS_BLUETOOTH_GUIDE.md'
 ];
 
-// Install event - cache assets
+// Install event - cache assets with iOS Safari compatibility
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Cache opened');
-        return cache.addAll(ASSETS_TO_CACHE);
+        // Cache assets individually to handle iOS Safari limitations
+        return Promise.all(
+          ASSETS_TO_CACHE.map(url => {
+            // Fetch with no-cors for cross-origin resources
+            return fetch(url, { credentials: 'same-origin' })
+              .then(response => {
+                // Only cache successful responses
+                if (response.ok) {
+                  return cache.put(url, response);
+                }
+              })
+              .catch(error => {
+                console.error('Failed to cache asset:', url, error);
+              });
+          })
+        );
       })
       .then(() => {
         return self.skipWaiting();
@@ -41,16 +57,13 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache, fall back to network
+// Fetch event - serve from cache, fall back to network with iOS Safari compatibility
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
   
-  // Skip cross-origin requests
+  // Handle API calls differently
   const url = new URL(event.request.url);
-  if (url.origin !== location.origin) return;
-  
-  // Skip API calls
   if (url.pathname.includes('webhook')) return;
   
   event.respondWith(
@@ -65,28 +78,50 @@ self.addEventListener('fetch', (event) => {
         const fetchRequest = event.request.clone();
         
         // Make network request
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
+        return fetch(fetchRequest)
+          .then((response) => {
+            // Check if valid response
+            if (!response || response.status !== 200) {
+              return response;
+            }
+            
+            // Clone the response
+            const responseToCache = response.clone();
+            
+            // Cache the fetched response
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                // Use request URL as the key for better iOS compatibility
+                cache.put(event.request.url, responseToCache);
+              })
+              .catch(err => {
+                console.error('Cache put error:', err);
+              });
+            
             return response;
-          }
-          
-          // Clone the response
-          const responseToCache = response.clone();
-          
-          // Cache the fetched response
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
+          })
+          .catch((error) => {
+            console.error('Fetch error:', error);
+            // Fallback for offline experience
+            if (event.request.url.includes('.html') || event.request.url.endsWith('/')) {
+              return caches.match('./index.html');
+            }
+            
+            // Return a specific error response for uncached resources
+            return new Response('Network error occurred', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: new Headers({
+                'Content-Type': 'text/plain'
+              })
             });
-          
-          return response;
-        });
+          });
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Cache match error:', error);
         // Fallback for offline experience
-        if (event.request.url.includes('.html')) {
-          return caches.match('/index.html');
+        if (event.request.url.includes('.html') || event.request.url.endsWith('/')) {
+          return caches.match('./index.html');
         }
       })
   );
