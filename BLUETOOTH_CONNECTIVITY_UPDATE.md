@@ -2,7 +2,7 @@
 
 ## Changes Implemented
 
-I've made several improvements to the Bluetooth connectivity functionality in the AIRAssist PWA to address the issue with connecting to generic Chinese Bluetooth earpieces:
+I've made several improvements to the Bluetooth connectivity functionality in the AIRAssist PWA to address issues with connecting to Bluetooth earpieces:
 
 ### 1. More Permissive Device Discovery
 
@@ -80,3 +80,34 @@ The main changes were made to the Bluetooth connection code in `index.html`:
 6. Added browser compatibility checking with the `checkBrowserCompatibility()` function
 
 These changes significantly improve the compatibility with generic Bluetooth earpieces that may not advertise standard audio service UUIDs.
+
+## iOS-Specific Improvements
+
+Additional improvements have been made specifically for iOS devices (iPhone X and newer):
+
+### 1. iOS Detection and Guidance
+
+- Added automatic iOS device detection
+- Created a dedicated [iOS Bluetooth Guide](iOS_BLUETOOTH_GUIDE.md) with detailed instructions
+- Added an iOS-specific notification banner that appears for iOS users
+- Provided a link to the iOS guide directly in the app interface
+
+### 2. PWA Installation Promotion
+
+- Added an install banner that encourages iOS users to install the app as a PWA
+- Provided step-by-step instructions for adding to home screen
+- Implemented detection for whether the app is running as an installed PWA
+
+### 3. Accessibility Improvements
+
+- Fixed viewport meta tag to allow zooming for better accessibility
+- Improved contrast and readability of iOS-specific UI elements
+- Added clear visual indicators for iOS-specific features
+
+### 4. Documentation
+
+- Created comprehensive documentation for iOS users in iOS_BLUETOOTH_GUIDE.md
+- Added iOS-specific troubleshooting steps
+- Provided detailed explanation of iOS Web Bluetooth limitations
+
+These iOS-specific improvements help address the unique challenges of Web Bluetooth on iOS devices, providing a better user experience for iPhone users.

@@ -117,6 +117,7 @@ Potential improvements to consider:
 - Verify your device is using HTTPS (required for Web Bluetooth)
 - Try disconnecting and reconnecting the device
 - See [BLUETOOTH_CONNECTIVITY_UPDATE.md](BLUETOOTH_CONNECTIVITY_UPDATE.md) for detailed information about recent improvements to Bluetooth connectivity
+- **iOS Users**: See [iOS_BLUETOOTH_GUIDE.md](iOS_BLUETOOTH_GUIDE.md) for specific instructions to improve Bluetooth connectivity on iOS devices
 
 ### n8n Connection Issues
 
