@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>AIRAssist</title>
@@ -340,6 +340,60 @@
             display: none;
         }
         
+        .ios-install-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            padding: 16px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            animation: slide-up 0.3s ease-out;
+        }
+        
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        .banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .banner-content h3 {
+            color: #007aff;
+            margin: 0;
+        }
+        
+        .banner-content ol {
+            padding-left: 20px;
+            margin: 0;
+        }
+        
+        .banner-content button {
+            align-self: center;
+            padding: 8px 16px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .ios-note {
+            background-color: #f8f8f8;
+            border-left: 4px solid #007aff;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
         @media (max-width: 390px) {
             .header h1 {
                 font-size: 20px;
@@ -527,6 +581,7 @@
         let visualizerContext = null;
         let connectionAttempts = 0;
         const MAX_CONNECTION_ATTEMPTS = 3;
+        let iosConnectionMonitorInterval = null;
         let settings = {
             autoListen: true,
             silenceThreshold: 15,
@@ -589,6 +644,54 @@
             }
         }
         
+        // Detect iOS
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) || 
+            (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
+        // Detect if running as installed PWA
+        function isInstalledPWA() {
+            return window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true;
+        }
+
+        // Show iOS install banner
+        function showIOSInstallBanner() {
+            // Check if banner was previously dismissed
+            if (localStorage.getItem('installBannerDismissed') === 'true') {
+                return;
+            }
+            
+            const banner = document.createElement('div');
+            banner.className = 'ios-install-banner';
+            banner.innerHTML = `
+                <div class="banner-content">
+                    <h3>Install for Better Bluetooth</h3>
+                    <p>For the best Bluetooth experience on iOS, install this app to your home screen:</p>
+                    <ol>
+                        <li>Tap the <strong>Share</strong> button</li>
+                        <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+                        <li>Tap <strong>Add</strong> in the top right</li>
+                    </ol>
+                    <button id="dismissBanner">Got it</button>
+                </div>
+            `;
+            
+            document.body.appendChild(banner);
+            document.getElementById('dismissBanner').addEventListener('click', () => {
+                banner.remove();
+                localStorage.setItem('installBannerDismissed', 'true');
+            });
+        }
+
         // Check browser compatibility for Web Bluetooth API
         function checkBrowserCompatibility() {
             if (!navigator.bluetooth) {
@@ -1374,6 +1477,29 @@
         
         window.addEventListener('offline', updateOfflineStatus);
         
+        // Show iOS guide message
+        function showIOSGuideMessage() {
+            if (isIOS()) {
+                // Add iOS-specific note
+                const iosNote = document.createElement('div');
+                iosNote.className = 'ios-note';
+                iosNote.innerHTML = `
+                    <strong>iOS User?</strong> For the best Bluetooth experience on iOS, please read our 
+                    <a href="iOS_BLUETOOTH_GUIDE.md" target="_blank">iOS Bluetooth Guide</a>.
+                    ${!isInstalledPWA() ? 'Installing as a PWA is highly recommended for iOS devices.' : ''}
+                `;
+                conversationPanel.appendChild(iosNote);
+                conversationPanel.scrollTop = conversationPanel.scrollHeight;
+                
+                // Show install banner if not installed as PWA
+                if (!isInstalledPWA()) {
+                    setTimeout(() => {
+                        showIOSInstallBanner();
+                    }, 5000); // Show after 5 seconds
+                }
+            }
+        }
+
         // Initialize app
         window.addEventListener('DOMContentLoaded', () => {
             // Initial offline status check
@@ -1387,6 +1513,9 @@
             
             // Add initial message
             addMessage('Hello! I\'m AIRAssist. Connect your Bluetooth earpiece to start.', 'ai');
+            
+            // Show iOS guide message if on iOS
+            showIOSGuideMessage();
             
             // Check n8n connection
             checkN8nConnection();
