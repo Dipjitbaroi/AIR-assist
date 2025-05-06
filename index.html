@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>AIRAssist</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f0f0;
+            color: #333;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: #007aff;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow: hidden;
+        }
+        
+        .status-panel {
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+        
+        .status-disconnected {
+            background-color: #ff3b30;
+        }
+        
+        .status-connected {
+            background-color: #34c759;
+        }
+        
+        .status-waiting {
+            background-color: #ffcc00;
+        }
+        
+        .status-text {
+            font-size: 16px;
+        }
+        
+        .conversation-panel {
+            flex: 1;
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px;
+            border-radius: 18px;
+            margin-bottom: 12px;
+            word-wrap: break-word;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #007aff;
+            color: white;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+            background-color: #e9e9eb;
+            color: #333;
+        }
+        
+        .controls-panel {
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        button:active {
+            background-color: #0062cc;
+        }
+        
+        .button-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        #connectButton {
+            background-color: #34c759;
+        }
+        
+        #connectButton:active {
+            background-color: #248a3d;
+        }
+        
+        #listenButton:active {
+            background-color: #c70024;
+        }
+        
+        #listenButton.listening {
+            background-color: #ff3b30;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 390px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .status-text {
+                font-size: 14px;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            button {
+                padding: 14px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AIRAssist</h1>
+    </div>
+    
+    <div class="main-container">
+        <div class="status-panel">
+            <div class="status-item">
+                <div id="bluetoothStatus" class="status-icon status-disconnected"></div>
+                <div id="bluetoothStatusText" class="status-text">Bluetooth: Disconnected</div>
+            </div>
+            <div class="status-item">
+                <div id="n8nStatus" class="status-icon status-disconnected"></div>
+                <div id="n8nStatusText" class="status-text">n8n Connection: Disconnected</div>
+            </div>
+        </div>
+        
+        <div class="conversation-panel" id="conversationPanel">
+            <!-- Messages will appear here -->
+        </div>
+        
+        <div class="controls-panel">
+            <button id="connectButton">
+                <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 10.5l5 5 5-5"></path>
+                    <path d="M21 18V6c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2z"></path>
+                </svg>
+                Connect Devices
+            </button>
+            
+            <button id="listenButton" disabled>
+                <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                </svg>
+                Start Listening
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+
+        // Configuration - Replace with your actual n8n webhook URL
+        const N8N_WEBHOOK_URL = 'https://your-n8n-instance.com/webhook/ai-assistant';
+        
+        // DOM Elements
+        const bluetoothStatus = document.getElementById('bluetoothStatus');
+        const bluetoothStatusText = document.getElementById('bluetoothStatusText');
+        const n8nStatus = document.getElementById('n8nStatus');
+        const n8nStatusText = document.getElementById('n8nStatusText');
+        const conversationPanel = document.getElementById('conversationPanel');
+        const connectButton = document.getElementById('connectButton');
+        const listenButton = document.getElementById('listenButton');
+        
+        // Variables
+        let bluetoothDevice = null;
+        let gattServer = null;
+        let audioService = null;
+        let txCharacteristic = null;
+        let rxCharacteristic = null;
+        let audioContext = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isListening = false;
+        let audioStream = null;
+        let isConnectedToN8n = false;
+        let audioSinkNode = null;
+        
+        // Check n8n connection
+        async function checkN8nConnection() {
+            try {
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action: 'ping' }),
+                });
+                
+                if (response.ok) {
+                    n8nStatus.classList.remove('status-disconnected');
+                    n8nStatus.classList.add('status-connected');
+                    n8nStatusText.textContent = 'n8n Connection: Connected';
+                    isConnectedToN8n = true;
+                    return true;
+                } else {
+                    throw new Error('n8n connection failed');
+                }
+            } catch (error) {
+                console.error('Error connecting to n8n:', error);
+                n8nStatus.classList.remove('status-connected');
+                n8nStatus.classList.add('status-disconnected');
+                n8nStatusText.textContent = 'n8n Connection: Failed';
+                isConnectedToN8n = false;
+                return false;
+            }
+        }
+        
+        // Connect to Bluetooth device
+        async function connectBluetooth() {
+            try {
+                bluetoothStatus.classList.remove('status-connected', 'status-disconnected');
+                bluetoothStatus.classList.add('status-waiting');
+                bluetoothStatusText.textContent = 'Bluetooth: Searching...';
+                
+                // Request Bluetooth device with audio service
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { services: ['0000110b-0000-1000-8000-00805f9b34fb'] } // A2DP Sink service for audio
+                    ],
+                    optionalServices: [
+                        '0000110a-0000-1000-8000-00805f9b34fb',  // A2DP Source
+                        '00001108-0000-1000-8000-00805f9b34fb',  // HSP/HFP
+                        '00001131-0000-1000-8000-00805f9b34fb',  // Hands-Free Voice Gateway
+                        '0000111e-0000-1000-8000-00805f9b34fb'   // Hands-Free
+                    ]
+                });
+                
+                bluetoothStatusText.textContent = 'Bluetooth: Connecting...';
+                
+                // Connect to GATT Server
+                gattServer = await bluetoothDevice.gatt.connect();
+                
+                // Try to connect to the audio service
+                try {
+                    audioService = await gattServer.getPrimaryService('0000110b-0000-1000-8000-00805f9b34fb');
+                    // For A2DP, we would need to get the characteristic for sending audio
+                    // This is simplified - actual A2DP implementation is more complex
+                } catch (error) {
+                    console.log('A2DP service not available, trying HSP/HFP');
+                    audioService = await gattServer.getPrimaryService('00001108-0000-1000-8000-00805f9b34fb');
+                }
+                
+                // Update status
+                bluetoothStatus.classList.remove('status-waiting', 'status-disconnected');
+                bluetoothStatus.classList.add('status-connected');
+                bluetoothStatusText.textContent = 'Bluetooth: Connected to ' + bluetoothDevice.name;
+                
+                // Enable listen button
+                listenButton.disabled = false;
+                
+                // Listen for disconnect events
+                bluetoothDevice.addEventListener('gattserverdisconnected', onBluetoothDisconnected);
+                
+                return true;
+            } catch (error) {
+                console.error('Bluetooth connection error:', error);
+                bluetoothStatus.classList.remove('status-waiting', 'status-connected');
+                bluetoothStatus.classList.add('status-disconnected');
+                bluetoothStatusText.textContent = 'Bluetooth: Connection Failed';
+                return false;
+            }
+        }
+        
+        // Handle Bluetooth disconnection
+        function onBluetoothDisconnected() {
+            bluetoothStatus.classList.remove('status-connected', 'status-waiting');
+            bluetoothStatus.classList.add('status-disconnected');
+            bluetoothStatusText.textContent = 'Bluetooth: Disconnected';
+            
+            // Disable listen button
+            listenButton.disabled = true;
+            
+            // If currently listening, stop
+            if (isListening) {
+                stopListening();
+            }
+        }
+        
+        // Initialize audio context
+        function initAudioContext() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            return audioContext;
+        }
+        
+        // Start listening for user voice input
+        async function startListening() {
+            try {
+                // Get microphone access
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Create MediaRecorder
+                mediaRecorder = new MediaRecorder(audioStream);
+                audioChunks = [];
+                
+                // Collect audio chunks
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                });
+                
+                // When recording stops, send audio to n8n
+                mediaRecorder.addEventListener('stop', () => {
+                    if (audioChunks.length > 0) {
+                        sendAudioToN8n();
+                    }
+                });
+                
+                // Start recording
+                mediaRecorder.start();
+                isListening = true;
+                
+                // Update UI
+                listenButton.classList.add('listening', 'pulse-animation');
+                listenButton.innerHTML = `
+                    <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                    Stop Listening
+                `;
+                
+                // Add user message indicating listening
+                addMessage('I\'m listening...', 'ai');
+                
+                return true;
+            } catch (error) {
+                console.error('Error starting microphone:', error);
+                addMessage('Failed to access microphone. Please check permissions.', 'ai');
+                return false;
+            }
+        }
+        
+        // Stop listening
+        function stopListening() {
+            if (mediaRecorder && isListening) {
+                mediaRecorder.stop();
+                isListening = false;
+                
+                // Update UI
+                listenButton.classList.remove('listening', 'pulse-animation');
+                listenButton.innerHTML = `
+                    <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                    Start Listening
+                `;
+                
+                // Close audio stream tracks
+                if (audioStream) {
+                    audioStream.getTracks().forEach(track => track.stop());
+                    audioStream = null;
+                }
+            }
+        }
+        
+        // Send audio to n8n
+        async function sendAudioToN8n() {
+            try {
+                // Create audio blob
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                
+                // Create FormData
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+                
+                // Add user message with loading state
+                const messageId = 'msg-' + Date.now();
+                addMessage('Processing...', 'user', messageId);
+                
+                // Send to n8n
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Update user message with transcription
+                    if (data.transcription) {
+                        updateMessage(messageId, data.transcription);
+                    }
+                    
+                    // Add AI response message
+                    if (data.response) {
+                        addMessage(data.response.text, 'ai');
+                        
+                        // Play audio response if available
+                        if (data.response.audioUrl) {
+                            playAudioResponse(data.response.audioUrl);
+                        }
+                    }
+                } else {
+                    throw new Error('Failed to process audio');
+                }
+            } catch (error) {
+                console.error('Error sending audio to n8n:', error);
+                addMessage('Sorry, I couldn\'t process your request.', 'ai');
+            }
+        }
+        
+        // Play audio response through Bluetooth device
+        async function playAudioResponse(audioUrl) {
+            try {
+                if (!audioContext) {
+                    initAudioContext();
+                }
+                
+                // Fetch audio file
+                const response = await fetch(audioUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                
+                // Decode audio data
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                // Create source node
+                const sourceNode = audioContext.createBufferSource();
+                sourceNode.buffer = audioBuffer;
+                
+                // Connect to destination (speaker output)
+                // In a real implementation, we would connect to the Bluetooth device
+                // but Web Bluetooth doesn't directly support audio output yet
+                sourceNode.connect(audioContext.destination);
+                
+                // Start playing
+                sourceNode.start();
+                
+                return true;
+            } catch (error) {
+                console.error('Error playing audio response:', error);
+                return false;
+            }
+        }
+        
+        // Add message to conversation panel
+        function addMessage(text, sender, id = null) {
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('message');
+            messageEl.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
+            messageEl.textContent = text;
+            
+            if (id) {
+                messageEl.id = id;
+            }
+            
+            conversationPanel.appendChild(messageEl);
+            conversationPanel.scrollTop = conversationPanel.scrollHeight;
+        }
+        
+        // Update message text
+        function updateMessage(id, text) {
+            const messageEl = document.getElementById(id);
+            if (messageEl) {
+                messageEl.textContent = text;
+            }
+        }
+        
+        // Event Listeners
+        connectButton.addEventListener('click', async () => {
+            // Check if already connected
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                // Disconnect
+                if (gattServer) {
+                    gattServer.disconnect();
+                }
+            } else {
+                // Connect to Bluetooth device
+                await connectBluetooth();
+                
+                // Check n8n connection
+                await checkN8nConnection();
+            }
+        });
+        
+        listenButton.addEventListener('click', () => {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        });
+        
+        // Add initial message
+        window.addEventListener('DOMContentLoaded', () => {
+            addMessage('Hello! I\'m AIRAssist. Connect your Bluetooth earpiece to start.', 'ai');
+        });
+    </script>
+</body>
+</html>
