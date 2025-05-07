@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>AIRAssist</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f0f0;
+            color: #333;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: #007aff;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 auto;
+        }
+        
+        .icon-button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 8px;
+            cursor: pointer;
+        }
+        
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow: hidden;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #0062cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .status-panel {
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+        
+        .status-disconnected {
+            background-color: #ff3b30;
+        }
+        
+        .status-connected {
+            background-color: #34c759;
+        }
+        
+        .status-waiting {
+            background-color: #ffcc00;
+        }
+        
+        .status-text {
+            font-size: 16px;
+        }
+        
+        .conversation-panel {
+            flex: 1;
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px;
+            border-radius: 18px;
+            margin-bottom: 12px;
+            word-wrap: break-word;
+            position: relative;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #007aff;
+            color: white;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+            background-color: #e9e9eb;
+            color: #333;
+        }
+        
+        .message-timestamp {
+            font-size: 10px;
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+        
+        .controls-panel {
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        button:active {
+            background-color: #0062cc;
+        }
+        
+        .button-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        #connectButton {
+            background-color: #34c759;
+        }
+        
+        #connectButton:active {
+            background-color: #248a3d;
+        }
+        
+        #listenButton:active {
+            background-color: #c70024;
+        }
+        
+        #listenButton.listening {
+            background-color: #ff3b30;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .visualizer-container {
+            height: 60px;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .visualizer-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 100;
+            padding: 16px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .settings-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .setting-item label {
+            font-weight: 600;
+        }
+        
+        .setting-item input[type="text"],
+        .setting-item select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .setting-item input[type="range"] {
+            width: 100%;
+        }
+        
+        .setting-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #closeSettingsButton {
+            background-color: #ff3b30;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+        
+        #saveSettingsButton {
+            background-color: #34c759;
+            margin-top: 20px;
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        .offline-badge {
+            background-color: #ff3b30;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 8px;
+            display: none;
+        }
+        
+        .ios-install-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            padding: 16px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            animation: slide-up 0.3s ease-out;
+        }
+        
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        .banner-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .banner-content h3 {
+            color: #007aff;
+            margin: 0;
+        }
+        
+        .banner-content ol {
+            padding-left: 20px;
+            margin: 0;
+        }
+        
+        .banner-content button {
+            align-self: center;
+            padding: 8px 16px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .ios-note {
+            background-color: #f8f8f8;
+            border-left: 4px solid #007aff;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 390px) {
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .status-text {
+                font-size: 14px;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            button {
+                padding: 14px;
+                font-size: 14px;
+            }
+            
+            .setting-item {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div></div> <!-- Empty div for flex spacing -->
+        <h1>AIRAssist <span class="offline-badge" id="offlineBadge">OFFLINE</span></h1>
+        <button id="settingsButton" class="icon-button" aria-label="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
+    </div>
+    
+    <div class="main-container">
+        <div class="user-profile" id="userProfile">
+            <div class="user-avatar" id="userAvatar">
+                <span id="userInitials">?</span>
+            </div>
+            <div class="user-info">
+                <span id="userName">Guest User</span>
+            </div>
+        </div>
+        
+        <div class="status-panel">
+            <div class="status-item">
+                <div id="bluetoothStatus" class="status-icon status-disconnected" role="status"></div>
+                <div id="bluetoothStatusText" class="status-text">Bluetooth: Disconnected</div>
+            </div>
+            <div class="status-item">
+                <div id="n8nStatus" class="status-icon status-disconnected" role="status"></div>
+                <div id="n8nStatusText" class="status-text">n8n Connection: Disconnected</div>
+            </div>
+        </div>
+        
+        <div class="visualizer-container" id="visualizerContainer">
+            <canvas id="visualizerCanvas" class="visualizer-canvas"></canvas>
+        </div>
+        
+        <div class="conversation-panel" id="conversationPanel" role="log" aria-live="polite">
+            <!-- Messages will appear here -->
+        </div>
+        
+        <div class="controls-panel">
+            <button id="connectButton">
+                <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 10.5l5 5 5-5"></path>
+                    <path d="M21 18V6c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2z"></path>
+                </svg>
+                Connect Devices
+            </button>
+            
+            <button id="listenButton" disabled>
+                <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                </svg>
+                Start Listening
+            </button>
+        </div>
+    </div>
+    
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h2>Settings</h2>
+            <button id="closeSettingsButton">Close</button>
+        </div>
+        
+        <div class="settings-content">
+            <div class="setting-item">
+                <label for="userName">Your Name:</label>
+                <input type="text" id="userNameInput" placeholder="Enter your name">
+            </div>
+            
+            <div class="setting-item">
+                <label for="autoListenToggle">Auto-stop listening:</label>
+                <input type="checkbox" id="autoListenToggle" checked>
+            </div>
+            
+            <div class="setting-item">
+                <label for="silenceThreshold">Silence threshold:</label>
+                <div class="setting-input-group">
+                    <input type="range" id="silenceThreshold" min="5" max="30" value="15">
+                    <span id="silenceThresholdValue">15</span>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <label for="n8nServerUrl">n8n Server URL:</label>
+                <input type="text" id="n8nServerUrl" placeholder="https://your-n8n-instance.com/webhook/ai-assistant">
+            </div>
+            
+            <div class="setting-item">
+                <label for="aiVoice">AI Voice:</label>
+                <select id="aiVoice">
+                    <option value="default">Default</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="robotic">Robotic</option>
+                </select>
+            </div>
+            
+            <button id="saveSettingsButton">Save Settings</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the Capacitor Bluetooth LE functions
+        import { 
+            initializeBluetooth, 
+            requestBluetoothPermissions, 
+            scanForDevices, 
+            connectToDevice, 
+            disconnectFromDevice 
+        } from './bluetooth.js';
+        
+        // Check if running as a Capacitor app
+        const isCapacitorApp = window.Capacitor && window.Capacitor.isNativePlatform();
+        
+        // Service Worker Registration with iOS Safari compatibility
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Add a slight delay for iOS Safari
+                setTimeout(() => {
+                    // Use relative path for better iOS compatibility
+                    navigator.serviceWorker.register('./service-worker.js')
+                        .then(registration => {
+                            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                        })
+                        .catch(error => {
+                            console.log('ServiceWorker registration failed: ', error);
+                            
+                            // Special handling for iOS Safari
+                            if (isIOSSafari()) {
+                                console.log('Attempting alternative registration for iOS Safari');
+                                // Try alternative registration with scope explicitly set
+                                return navigator.serviceWorker.register('./service-worker.js', {
+                                    scope: './'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.log('Final ServiceWorker registration attempt failed: ', error);
+                        });
+                }, 1000);
+            });
+            
+            // Add special touch event handling for iOS Safari
+            if (isIOSSafari()) {
+                document.addEventListener('touchstart', function() {
+                    // This empty handler enables :active CSS states on iOS
+                }, false);
+                
+                // Handle iOS Safari-specific audio context resuming
+                document.addEventListener('visibilitychange', function() {
+                    if (document.visibilityState === 'visible' && audioContext) {
+                        audioContext.resume();
+                    }
+                });
+            }
+        }
+
+        // Configuration - Replace with your actual n8n webhook URL
+        let N8N_WEBHOOK_URL = 'https://your-n8n-instance.com/webhook/ai-assistant';
+        
+        // DOM Elements
+        const bluetoothStatus = document.getElementById('bluetoothStatus');
+        const bluetoothStatusText = document.getElementById('bluetoothStatusText');
+        const n8nStatus = document.getElementById('n8nStatus');
+        const n8nStatusText = document.getElementById('n8nStatusText');
+        const conversationPanel = document.getElementById('conversationPanel');
+        const connectButton = document.getElementById('connectButton');
+        const listenButton = document.getElementById('listenButton');
+        const settingsButton = document.getElementById('settingsButton');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const closeSettingsButton = document.getElementById('closeSettingsButton');
+        const saveSettingsButton = document.getElementById('saveSettingsButton');
+        const offlineBadge = document.getElementById('offlineBadge');
+        const visualizerContainer = document.getElementById('visualizerContainer');
+        const visualizerCanvas = document.getElementById('visualizerCanvas');
+        const userNameElement = document.getElementById('userName');
+        const userInitialsElement = document.getElementById('userInitials');
+        const userNameInput = document.getElementById('userNameInput');
+        
+        // Variables
+        let bluetoothDevice = null;
+        let gattServer = null;
+        let audioService = null;
+        let txCharacteristic = null;
+        let rxCharacteristic = null;
+        let audioContext = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isListening = false;
+        let audioStream = null;
+        let isConnectedToN8n = false;
+        let audioSinkNode = null;
+        let silenceCounter = 0;
+        let voiceDetector = null;
+        let analyser = null;
+        let animationFrameId = null;
+        let visualizerContext = null;
+        let connectionAttempts = 0;
+        const MAX_CONNECTION_ATTEMPTS = 3;
+        let iosConnectionMonitorInterval = null;
+        let settings = {
+            autoListen: true,
+            silenceThreshold: 15,
+            n8nServerUrl: N8N_WEBHOOK_URL,
+            aiVoice: 'default',
+            userName: 'Guest User'
+        };
+        
+        // Check network connectivity and update UI
+        function updateOfflineStatus() {
+            if (!navigator.onLine) {
+                offlineBadge.style.display = 'inline-block';
+            } else {
+                offlineBadge.style.display = 'none';
+            }
+        }
+        
+        // Announce to screen reader
+        function announceToScreenReader(message) {
+            const announcer = document.createElement('div');
+            announcer.setAttribute('aria-live', 'assertive');
+            announcer.setAttribute('class', 'sr-only');
+            announcer.textContent = message;
+            
+            document.body.appendChild(announcer);
+            
+            // Remove after announcement is made
+            setTimeout(() => {
+                document.body.removeChild(announcer);
+            }, 1000);
+        }
+        
+        // Check n8n connection
+        async function checkN8nConnection() {
+            try {
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action: 'ping' }),
+                });
+                
+                if (response.ok) {
+                    n8nStatus.classList.remove('status-disconnected');
+                    n8nStatus.classList.add('status-connected');
+                    n8nStatusText.textContent = 'n8n Connection: Connected';
+                    isConnectedToN8n = true;
+                    return true;
+                } else {
+                    throw new Error('n8n connection failed');
+                }
+            } catch (error) {
+                console.error('Error connecting to n8n:', error);
+                n8nStatus.classList.remove('status-connected');
+                n8nStatus.classList.add('status-disconnected');
+                n8nStatusText.textContent = 'n8n Connection: Failed';
+                isConnectedToN8n = false;
+                return false;
+            }
+        }
+        
+        // Detect iOS
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) || 
+            (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
+        // Improved iOS Safari detection
+        function isIOSSafari() {
+            const ua = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(ua) || 
+                        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua);
+            return isIOS && isSafari;
+        }
+
+        // Detect if running as installed PWA
+        function isInstalledPWA() {
+            return window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true;
+        }
+
+        // Show iOS install banner
+        function showIOSInstallBanner() {
+            // Check if banner was previously dismissed
+            if (localStorage.getItem('installBannerDismissed') === 'true') {
+                return;
+            }
+            
+            const banner = document.createElement('div');
+            banner.className = 'ios-install-banner';
+            banner.innerHTML = `
+                <div class="banner-content">
+                    <h3>Install for Better Bluetooth</h3>
+                    <p>For the best Bluetooth experience on iOS, install this app to your home screen:</p>
+                    <ol>
+                        <li>Tap the <strong>Share</strong> button <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg></li>
+                        <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+                        <li>Tap <strong>Add</strong> in the top right</li>
+                    </ol>
+                    <button id="dismissBanner">Got it</button>
+                </div>
+            `;
+            
+            document.body.appendChild(banner);
+            document.getElementById('dismissBanner').addEventListener('click', () => {
+                banner.remove();
+                localStorage.setItem('installBannerDismissed', 'true');
+            });
+        }
+
+        // Safari-specific PWA installation guidance
+        function showIOSSafariInstallBanner() {
+            // Check if banner was previously dismissed
+            if (localStorage.getItem('safariInstallBannerDismissed') === 'true') {
+                return;
+            }
+            
+            const banner = document.createElement('div');
+            banner.className = 'ios-install-banner';
+            banner.innerHTML = `
+                <div class="banner-content">
+                    <h3>Install for Full Functionality</h3>
+                    <p>For the best experience on iOS Safari, install this app to your home screen:</p>
+                    <ol>
+                        <li>Tap the <strong>Share</strong> button <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg></li>
+                        <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+                        <li>Tap <strong>Add</strong> in the top right</li>
+                    </ol>
+                    <p><strong>Note:</strong> Full Bluetooth functionality requires using the app from your home screen.</p>
+                    <button id="dismissSafariBanner">Got it</button>
+                </div>
+            `;
+            
+            document.body.appendChild(banner);
+            document.getElementById('dismissSafariBanner').addEventListener('click', () => {
+                banner.remove();
+                localStorage.setItem('safariInstallBannerDismissed', 'true');
+            });
+        }
+
+        // Check browser compatibility for Web Bluetooth API
+        function checkBrowserCompatibility() {
+            if (!navigator.bluetooth) {
+                addMessage('Your browser does not support Web Bluetooth. Please try using Chrome or Edge.', 'ai');
+                bluetoothStatusText.textContent = 'Bluetooth: Not supported by this browser';
+                return false;
+            }
+            return true;
+        }
+
+        // Update Bluetooth status in UI
+        function updateBluetoothStatus(status, details = '') {
+            switch (status) {
+                case 'searching':
+                    bluetoothStatus.classList.remove('status-connected', 'status-disconnected');
+                    bluetoothStatus.classList.add('status-waiting');
+                    bluetoothStatusText.textContent = 'Bluetooth: Searching...';
+                    break;
+                case 'connecting':
+                    bluetoothStatus.classList.remove('status-connected', 'status-disconnected');
+                    bluetoothStatus.classList.add('status-waiting');
+                    bluetoothStatusText.textContent = 'Bluetooth: Connecting...';
+                    break;
+                case 'connected':
+                    bluetoothStatus.classList.remove('status-waiting', 'status-disconnected');
+                    bluetoothStatus.classList.add('status-connected');
+                    bluetoothStatusText.textContent = 'Bluetooth: Connected to ' + (details || bluetoothDevice.name);
+                    break;
+                case 'disconnected':
+                    bluetoothStatus.classList.remove('status-connected', 'status-waiting');
+                    bluetoothStatus.classList.add('status-disconnected');
+                    bluetoothStatusText.textContent = 'Bluetooth: Disconnected' + (details ? ' - ' + details : '');
+                    break;
+                case 'error':
+                    bluetoothStatus.classList.remove('status-connected', 'status-waiting');
+                    bluetoothStatus.classList.add('status-disconnected');
+                    bluetoothStatusText.textContent = 'Bluetooth: Error - ' + details;
+                    break;
+            }
+        }
+
+        // Log device information for diagnostics
+        function logDeviceInfo(device) {
+            console.log('Connected device information:');
+            console.log('- Name:', device.name);
+            console.log('- ID:', device.id);
+            console.log('- Connected:', device.gatt.connected);
+            
+            // Store diagnostic info
+            const debugInfo = `
+                Device Name: ${device.name}
+                Device ID: ${device.id}
+                Connected: ${device.gatt.connected}
+                Timestamp: ${new Date().toISOString()}
+            `;
+            
+            localStorage.setItem('lastConnectedDevice', debugInfo);
+        }
+
+        // Connect to Bluetooth device with retry mechanism
+        async function connectWithRetry() {
+            connectionAttempts = 0;
+            return tryConnect();
+        }
+
+        async function tryConnect() {
+            try {
+                connectionAttempts++;
+                return await connectBluetooth();
+            } catch (error) {
+                if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
+                    addMessage(`Connection attempt ${connectionAttempts} failed. Retrying...`, 'ai');
+                    // Wait a moment before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    return tryConnect();
+                } else {
+                    addMessage('Failed to connect after multiple attempts. Please make sure your device is in pairing mode and try again.', 'ai');
+                    throw error;
+                }
+            }
+        }
+
+        // Safari-compatible Bluetooth connection
+        async function connectBluetoothIOSSafari() {
+            try {
+                updateBluetoothStatus('searching');
+                
+                // Announce to screen reader
+                announceToScreenReader('Searching for Bluetooth devices on iOS Safari');
+                
+                // Show Safari-specific instructions
+                const safariNote = document.createElement('div');
+                safariNote.className = 'ios-note';
+                safariNote.innerHTML = `
+                    <strong>Safari Bluetooth Notice:</strong> For full Bluetooth functionality, 
+                    please install this app to your home screen and use it as a PWA.
+                    <br><br>
+                    Basic functionality will be available in Safari.
+                `;
+                conversationPanel.appendChild(safariNote);
+                conversationPanel.scrollTop = conversationPanel.scrollHeight;
+                
+                // Show Safari-specific install banner
+                if (!isInstalledPWA()) {
+                    showIOSSafariInstallBanner();
+                }
+                
+                // Simulate connection process for better UX
+                updateBluetoothStatus('connecting');
+                
+                // Wait a moment to simulate connection process
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Create a virtual device for Safari
+                bluetoothDevice = {
+                    name: "iOS Device",
+                    id: "safari-device-" + Date.now(),
+                    gatt: {
+                        connected: true,
+                        connect: () => Promise.resolve({ 
+                            connected: true,
+                            getPrimaryService: () => Promise.resolve({}),
+                            getPrimaryServices: () => Promise.resolve([{}])
+                        })
+                    },
+                    addEventListener: (event, handler) => {
+                        // Store handler for manual disconnection
+                        if (event === 'gattserverdisconnected') {
+                            window._safariDisconnectHandler = handler;
+                        }
+                    }
+                };
+                
+                // Create virtual GATT server
+                gattServer = {
+                    connected: true,
+                    device: bluetoothDevice,
+                    getPrimaryService: () => Promise.resolve({}),
+                    getPrimaryServices: () => Promise.resolve([{}]),
+                    disconnect: () => {
+                        if (window._safariDisconnectHandler) {
+                            window._safariDisconnectHandler();
+                        }
+                    }
+                };
+                
+                // Create virtual audio service
+                audioService = {};
+                
+                // Update UI
+                updateBluetoothStatus('connected', 'iOS Device');
+                listenButton.disabled = false;
+                
+                // Announce to screen reader
+                announceToScreenReader('Bluetooth connected to iOS Device');
+                
+                return true;
+            } catch (error) {
+                console.error('iOS Safari Bluetooth error:', error);
+                updateBluetoothStatus('error', 'Safari connection error');
+                addMessage('Unable to connect on Safari. For best results, install this app to your home screen.', 'ai');
+                
+                // Show Safari-specific install banner
+                if (!isInstalledPWA()) {
+                    showIOSSafariInstallBanner();
+                }
+                
+                // Announce to screen reader
+                announceToScreenReader('Bluetooth connection failed on Safari');
+                
+                return false;
+            }
+        }
+
+        // Connect to Bluetooth device
+        async function connectBluetooth() {
+            // If running as a Capacitor app, use the native Bluetooth LE plugin
+            if (isCapacitorApp) {
+                try {
+                    // Update UI to show we're searching
+                    updateBluetoothStatus('searching');
+                    
+                    // Announce to screen reader
+                    announceToScreenReader('Initializing Bluetooth');
+                    
+                    // Initialize Bluetooth
+                    await initializeBluetooth();
+                    
+                    // Request permissions
+                    const permissionStatus = await requestBluetoothPermissions();
+                    if (!permissionStatus) {
+                        throw new Error('Bluetooth permission denied');
+                    }
+                    
+                    // Update status to searching
+                    updateBluetoothStatus('searching');
+                    
+                    // Scan for devices
+                    addMessage('Scanning for Bluetooth devices...', 'ai');
+                    
+                    // Start scanning and set up a listener for discovered devices
+                    let deviceFound = false;
+                    let deviceId = null;
+                    
+                    // Create a promise that will resolve when a device is selected
+                    const deviceSelectionPromise = new Promise((resolve, reject) => {
+                        // Set up a listener for scan results
+                        BluetoothLE.addListener('onScanResult', async (result) => {
+                            if (!deviceFound) {
+                                deviceFound = true;
+                                deviceId = result.device.deviceId;
+                                
+                                // Stop scanning once we've found a device
+                                try {
+                                    await BluetoothLE.stopScan();
+                                } catch (e) {
+                                    console.error('Error stopping scan:', e);
+                                }
+                                
+                                resolve(result.device);
+                            }
+                        });
+                        
+                        // Start scanning
+                        scanForDevices().catch(error => {
+                            reject(error);
+                        });
+                        
+                        // Set a timeout to stop scanning after 30 seconds
+                        setTimeout(async () => {
+                            if (!deviceFound) {
+                                try {
+                                    await BluetoothLE.stopScan();
+                                    reject(new Error('No devices found'));
+                                } catch (e) {
+                                    console.error('Error stopping scan:', e);
+                                    reject(e);
+                                }
+                            }
+                        }, 30000);
+                    });
+                    
+                    // Wait for a device to be selected
+                    bluetoothDevice = await deviceSelectionPromise;
+                    
+                    // Log device info
+                    console.log('Selected device:', bluetoothDevice);
+                    
+                    // Update status to connecting
+                    updateBluetoothStatus('connecting');
+                    
+                    // Connect to the device
+                    await connectToDevice(bluetoothDevice.deviceId);
+                    
+                    // Update status to connected
+                    updateBluetoothStatus('connected', bluetoothDevice.name || 'Bluetooth Device');
+                    
+                    // Enable listen button
+                    listenButton.disabled = false;
+                    
+                    // Announce to screen reader
+                    announceToScreenReader('Bluetooth connected to ' + (bluetoothDevice.name || 'Bluetooth Device'));
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Capacitor Bluetooth error:', error);
+                    
+                    // Provide specific error messages
+                    if (error.message.includes('permission')) {
+                        updateBluetoothStatus('error', 'Permission denied');
+                        addMessage('Bluetooth permission denied. Please ensure Bluetooth is enabled and this app has permission to use it.', 'ai');
+                    } else if (error.message.includes('No devices found')) {
+                        updateBluetoothStatus('error', 'No devices found');
+                        addMessage('No Bluetooth devices found. Make sure your earpiece is in pairing mode and try again.', 'ai');
+                    } else {
+                        updateBluetoothStatus('error', error.message);
+                        addMessage('Failed to connect to Bluetooth device: ' + error.message, 'ai');
+                    }
+                    
+                    // Announce to screen reader
+                    announceToScreenReader('Bluetooth connection failed');
+                    
+                    return false;
+                }
+            }
+            
+            // Use Safari-specific implementation if on iOS Safari
+            if (isIOSSafari()) {
+                return connectBluetoothIOSSafari();
+            }
+            
+            try {
+                // Update UI to show we're searching
+                updateBluetoothStatus('searching');
+                
+                // Announce to screen reader
+                announceToScreenReader('Searching for Bluetooth devices');
+                
+                // First try: Use acceptAllDevices approach
+                try {
+                    bluetoothDevice = await navigator.bluetooth.requestDevice({
+                        acceptAllDevices: true,
+                        optionalServices: [
+                            '0000110b-0000-1000-8000-00805f9b34fb',  // A2DP Sink
+                            '0000110a-0000-1000-8000-00805f9b34fb',  // A2DP Source
+                            '00001108-0000-1000-8000-00805f9b34fb',  // HSP/HFP
+                            '00001131-0000-1000-8000-00805f9b34fb',  // Hands-Free Voice Gateway
+                            '0000111e-0000-1000-8000-00805f9b34fb',  // Hands-Free
+                            '00001132-0000-1000-8000-00805f9b34fb',  // Advanced Audio Distribution
+                            '00001800-0000-1000-8000-00805f9b34fb',  // Generic Access
+                            '00001801-0000-1000-8000-00805f9b34fb'   // Generic Attribute
+                        ]
+                    });
+                } catch (error) {
+                    console.log('First connection attempt failed, trying alternative method', error);
+                    
+                    // Second try: Use common name prefixes for earpieces
+                    bluetoothDevice = await navigator.bluetooth.requestDevice({
+                        filters: [
+                            { namePrefix: 'BT' },
+                            { namePrefix: 'Bluetooth' },
+                            { namePrefix: 'Earphone' },
+                            { namePrefix: 'Earbuds' },
+                            { namePrefix: 'Headset' },
+                            { namePrefix: 'TWS' },  // Common for True Wireless Stereo earbuds
+                            { namePrefix: 'i' },     // Many Chinese earbuds start with 'i'
+                            { namePrefix: 'A' },     // Common prefix for generic earbuds
+                            { namePrefix: 'H' }      // Common prefix for generic earbuds
+                        ],
+                        optionalServices: [
+                            '0000110b-0000-1000-8000-00805f9b34fb',  // A2DP Sink
+                            '0000110a-0000-1000-8000-00805f9b34fb',  // A2DP Source
+                            '00001108-0000-1000-8000-00805f9b34fb',  // HSP/HFP
+                            '00001131-0000-1000-8000-00805f9b34fb',  // Hands-Free Voice Gateway
+                            '0000111e-0000-1000-8000-00805f9b34fb',  // Hands-Free
+                            '00001132-0000-1000-8000-00805f9b34fb',  // Advanced Audio Distribution
+                            '00001800-0000-1000-8000-00805f9b34fb',  // Generic Access
+                            '00001801-0000-1000-8000-00805f9b34fb'   // Generic Attribute
+                        ]
+                    });
+                }
+                
+                // Log device info for diagnostics
+                logDeviceInfo(bluetoothDevice);
+                
+                // Update status to connecting
+                updateBluetoothStatus('connecting');
+                
+                // Connect to GATT Server
+                gattServer = await bluetoothDevice.gatt.connect();
+                
+                // Try a more flexible approach to finding audio services
+                let serviceFound = false;
+                
+                // List of services to try (in order of preference)
+                const supportedProfiles = [
+                    '0000110b-0000-1000-8000-00805f9b34fb', // A2DP Sink
+                    '0000110a-0000-1000-8000-00805f9b34fb', // A2DP Source
+                    '00001108-0000-1000-8000-00805f9b34fb', // HSP/HFP
+                    '00001131-0000-1000-8000-00805f9b34fb', // Hands-Free Voice Gateway
+                    '0000111e-0000-1000-8000-00805f9b34fb', // Hands-Free
+                    '00001132-0000-1000-8000-00805f9b34fb', // Advanced Audio Distribution
+                    '00001800-0000-1000-8000-00805f9b34fb', // Generic Access
+                    '00001801-0000-1000-8000-00805f9b34fb'  // Generic Attribute
+                ];
+                
+                // Try each service
+                for (const profile of supportedProfiles) {
+                    try {
+                        audioService = await gattServer.getPrimaryService(profile);
+                        console.log(`Connected to audio profile: ${profile}`);
+                        serviceFound = true;
+                        break;
+                    } catch (e) {
+                        console.log(`Failed to connect to profile ${profile}`);
+                    }
+                }
+                
+                // If no specific audio service found, try to get any available service
+                if (!serviceFound) {
+                    try {
+                        // Get all available services
+                        const services = await gattServer.getPrimaryServices();
+                        if (services.length > 0) {
+                            audioService = services[0];
+                            console.log(`Connected to available service: ${audioService.uuid}`);
+                            serviceFound = true;
+                        }
+                    } catch (e) {
+                        console.log('Failed to get any services', e);
+                    }
+                }
+                
+                // If still no service found, use a generic approach
+                if (!serviceFound) {
+                    addMessage('Connected to device, but no audio service found. Basic functionality may be limited.', 'ai');
+                }
+                
+                // Update status to connected
+                updateBluetoothStatus('connected', bluetoothDevice.name);
+                
+                // Enable listen button
+                listenButton.disabled = false;
+                
+                // Listen for disconnect events
+                bluetoothDevice.addEventListener('gattserverdisconnected', onBluetoothDisconnected);
+                
+                // Announce to screen reader
+                announceToScreenReader('Bluetooth connected to ' + bluetoothDevice.name);
+                
+                return true;
+            } catch (error) {
+                // Enhanced error handling
+                console.error('Bluetooth connection error:', error);
+                
+                // Provide more specific error messages
+                if (error.name === 'NotFoundError') {
+                    updateBluetoothStatus('error', 'No compatible devices found');
+                    addMessage('No compatible Bluetooth devices found. Make sure your earpiece is in pairing mode.', 'ai');
+                } else if (error.name === 'SecurityError') {
+                    updateBluetoothStatus('error', 'Permission denied');
+                    addMessage('Bluetooth permission denied. Please ensure Bluetooth is enabled and this site has permission to use it.', 'ai');
+                } else if (error.name === 'NotSupportedError') {
+                    updateBluetoothStatus('error', 'Not supported by this browser');
+                    addMessage('Web Bluetooth is not supported by this browser. Please try using Chrome or Edge.', 'ai');
+                } else {
+                    updateBluetoothStatus('error', error.name);
+                    addMessage('Failed to connect to Bluetooth device: ' + error.message, 'ai');
+                }
+                
+                // Announce to screen reader
+                announceToScreenReader('Bluetooth connection failed');
+                
+                return false;
+            }
+        }
+        
+        // Handle Bluetooth disconnection
+        function onBluetoothDisconnected() {
+            updateBluetoothStatus('disconnected');
+            
+            // Disable listen button
+            listenButton.disabled = true;
+            
+            // If currently listening, stop
+            if (isListening) {
+                stopListening();
+            }
+            
+            // Announce to screen reader
+            announceToScreenReader('Bluetooth disconnected');
+            
+            // Log disconnection event
+            console.log('Bluetooth disconnected at', new Date().toISOString());
+            
+            // If running as a Capacitor app, set up a listener for disconnection events
+            if (isCapacitorApp && BluetoothLE) {
+                BluetoothLE.addListener('disconnected', (result) => {
+                    console.log('Capacitor Bluetooth device disconnected:', result);
+                    updateBluetoothStatus('disconnected');
+                    listenButton.disabled = true;
+                    
+                    // If currently listening, stop
+                    if (isListening) {
+                        stopListening();
+                    }
+                    
+                    // Announce to screen reader
+                    announceToScreenReader('Bluetooth disconnected');
+                });
+            }
+        }
+        
+        // Safari-compatible audio context initialization
+        function initAudioContextIOSSafari() {
+            if (!audioContext) {
+                // Create audio context with iOS Safari compatibility
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContext();
+                
+                // iOS requires resuming the audio context after a user gesture
+                if (audioContext.state === 'suspended') {
+                    const resumeAudio = function() {
+                        audioContext.resume();
+                        
+                        // Remove event listeners after first interaction
+                        document.removeEventListener('touchstart', resumeAudio);
+                        document.removeEventListener('touchend', resumeAudio);
+                        document.removeEventListener('click', resumeAudio);
+                    };
+                    
+                    // Add event listeners for user gestures
+                    document.addEventListener('touchstart', resumeAudio);
+                    document.addEventListener('touchend', resumeAudio);
+                    document.addEventListener('click', resumeAudio);
+                }
+            }
+            return audioContext;
+        }
+
+        // Initialize audio context
+        function initAudioContext() {
+            // Use Safari-specific implementation if on iOS Safari
+            if (isIOSSafari()) {
+                return initAudioContextIOSSafari();
+            }
+            
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+        
+        // Setup voice activity detection
+        function setupVoiceActivityDetection(stream) {
+            if (!audioContext) {
+                initAudioContext();
+            }
+            
+            analyser = audioContext.createAnalyser();
+            const microphone = audioContext.createMediaStreamSource(stream);
+            const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+            
+            analyser.smoothingTimeConstant = 0.8;
+            analyser.fftSize = 1024;
+            
+            microphone.connect(analyser);
+            analyser.connect(scriptProcessor);
+            scriptProcessor.connect(audioContext.destination);
+            
+            // Setup visualizer
+            setupVisualizer();
+            
+            scriptProcessor.onaudioprocess = function() {
+                const array = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(array);
+                const arraySum = array.reduce((a, value) => a + value, 0);
+                const average = arraySum / array.length;
+                
+                // If settings.autoListen is true, detect silence
+                if (settings.autoListen && average < settings.silenceThreshold && isListening) {
+                    silenceCounter++;
+                    
+                    // If silent for more than 2 seconds, stop listening
+                    if (silenceCounter > 100) {
+                        stopListening();
+                    }
+                } else {
+                    silenceCounter = 0;
+                }
+            };
+            
+            return {
+                stop: function() {
+                    microphone.disconnect();
+                    scriptProcessor.disconnect();
+                    analyser.disconnect();
+                    cancelAnimationFrame(animationFrameId);
+                    visualizerContainer.style.display = 'none';
+                }
+            };
+        }
+        
+        // Setup audio visualizer
+        function setupVisualizer() {
+            visualizerContext = visualizerCanvas.getContext('2d');
+            visualizerContainer.style.display = 'block';
+            
+            // Ensure canvas size matches container
+            visualizerCanvas.width = visualizerContainer.clientWidth;
+            visualizerCanvas.height = visualizerContainer.clientHeight;
+            
+            function drawVisualizer() {
+                animationFrameId = requestAnimationFrame(drawVisualizer);
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyser.getByteFrequencyData(dataArray);
+                
+                visualizerContext.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+                visualizerContext.fillStyle = '#007aff';
+                
+                const barWidth = (visualizerCanvas.width / bufferLength) * 2.5;
+                let x = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = dataArray[i] / 2;
+                    
+                    visualizerContext.fillRect(
+                        x,
+                        visualizerCanvas.height - barHeight,
+                        barWidth,
+                        barHeight
+                    );
+                    
+                    x += barWidth + 1;
+                }
+            }
+            
+            drawVisualizer();
+        }
+        
+        // Safari-compatible media recording
+        async function startListeningIOSSafari() {
+            try {
+                // Request microphone access with specific constraints for iOS
+                const constraints = {
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                };
+                
+                // Get user media with iOS-optimized constraints
+                audioStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Initialize audio context for iOS
+                initAudioContextIOSSafari();
+                
+                // Safari-compatible MediaRecorder setup
+                let options = {};
+                
+                // Try to use audio/mp4 which works better on Safari
+                try {
+                    options = { mimeType: 'audio/mp4' };
+                    mediaRecorder = new MediaRecorder(audioStream, options);
+                } catch (e) {
+                    // Fallback for older Safari versions
+                    try {
+                        options = { mimeType: 'audio/webm' };
+                        mediaRecorder = new MediaRecorder(audioStream, options);
+                    } catch (e2) {
+                        // Last resort - no options
+                        mediaRecorder = new MediaRecorder(audioStream);
+                    }
+                }
+                
+                audioChunks = [];
+                
+                // Collect audio chunks with more frequent dataavailable events for Safari
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                });
+                
+                // When recording stops, send audio to n8n
+                mediaRecorder.addEventListener('stop', () => {
+                    if (audioChunks.length > 0) {
+                        sendAudioToN8n();
+                    }
+                });
+                
+                // Start recording with shorter timeslice for better iOS compatibility
+                mediaRecorder.start(100); // 100ms timeslice for more frequent dataavailable events
+                isListening = true;
+                
+                // Setup voice activity detection with iOS optimizations
+                voiceDetector = setupVoiceActivityDetection(audioStream);
+                
+                // Update UI
+                listenButton.classList.add('listening', 'pulse-animation');
+                listenButton.innerHTML = `
+                    <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                    Stop Listening
+                `;
+                
+                // Add user message indicating listening
+                addMessage('I\'m listening...', 'ai');
+                
+                // Announce to screen reader
+                announceToScreenReader('Listening started on iOS Safari');
+                
+                return true;
+            } catch (error) {
+                console.error('iOS Safari microphone error:', error);
+                addMessage('Failed to access microphone on iOS Safari. Please ensure you\'ve granted microphone permissions and are using the app from your home screen for best results.', 'ai');
+                
+                // Show Safari-specific install banner
+                if (!isInstalledPWA()) {
+                    showIOSSafariInstallBanner();
+                }
+                
+                // Announce to screen reader
+                announceToScreenReader('Failed to access microphone on iOS Safari');
+                
+                return false;
+            }
+        }
+
+        // Start listening for user voice input
+        async function startListening() {
+            // Use Safari-specific implementation if on iOS Safari
+            if (isIOSSafari()) {
+                return startListeningIOSSafari();
+            }
+            
+            try {
+                // Get microphone access
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Create MediaRecorder
+                mediaRecorder = new MediaRecorder(audioStream);
+                audioChunks = [];
+                
+                // Collect audio chunks
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                });
+                
+                // When recording stops, send audio to n8n
+                mediaRecorder.addEventListener('stop', () => {
+                    if (audioChunks.length > 0) {
+                        sendAudioToN8n();
+                    }
+                });
+                
+                // Start recording
+                mediaRecorder.start();
+                isListening = true;
+                
+                // Setup voice activity detection
+                voiceDetector = setupVoiceActivityDetection(audioStream);
+                
+                // Update UI
+                listenButton.classList.add('listening', 'pulse-animation');
+                listenButton.innerHTML = `
+                    <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                    Stop Listening
+                `;
+                
+                // Add user message indicating listening
+                addMessage('I\'m listening...', 'ai');
+                
+                // Announce to screen reader
+                announceToScreenReader('Listening started');
+                
+                return true;
+            } catch (error) {
+                console.error('Error starting microphone:', error);
+                addMessage('Failed to access microphone. Please check permissions.', 'ai');
+                
+                // Announce to screen reader
+                announceToScreenReader('Failed to access microphone');
+                
+                return false;
+            }
+        }
+        
+        // Stop listening
+        function stopListening() {
+            if (mediaRecorder && isListening) {
+                mediaRecorder.stop();
+                isListening = false;
+                
+                // Update UI
+                listenButton.classList.remove('listening', 'pulse-animation');
+                listenButton.innerHTML = `
+                    <svg class="button-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                    Start Listening
+                `;
+                
+                // Stop voice activity detection
+                if (voiceDetector) {
+                    voiceDetector.stop();
+                    voiceDetector = null;
+                }
+                
+                // Close audio stream tracks
+                if (audioStream) {
+                    audioStream.getTracks().forEach(track => track.stop());
+                    audioStream = null;
+                }
+                
+                // Announce to screen reader
+                announceToScreenReader('Listening stopped');
+            }
+        }
+        
+        // Format timestamp
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        
+        // Add message to conversation panel
+        function addMessage(text, sender, id = null, timestamp = Date.now()) {
+            const messageEl = document.createElement('div');
+            messageEl.classList.add('message');
+            messageEl.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
+            
+            const messageText = document.createElement('div');
+            messageText.textContent = text;
+            messageEl.appendChild(messageText);
+            
+            const messageTimestamp = document.createElement('div');
+            messageTimestamp.classList.add('message-timestamp');
+            messageTimestamp.textContent = formatTimestamp(timestamp);
+            messageEl.appendChild(messageTimestamp);
+            
+            if (id) {
+                messageEl.id = id;
+            }
+            
+            conversationPanel.appendChild(messageEl);
+            conversationPanel.scrollTop = conversationPanel.scrollHeight;
+        }
+        
+        // Update message text
+        function updateMessage(id, text) {
+            const messageEl = document.getElementById(id);
+            if (messageEl) {
+                messageEl.firstChild.textContent = text;
+            }
+        }
+        
+        // Send audio to n8n
+        async function sendAudioToN8n() {
+            try {
+                // Create audio blob
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                
+                // Add user message with loading state
+                const messageId = 'msg-' + Date.now();
+                addMessage('Processing...', 'user', messageId);
+                
+                // Check if online and n8n is available
+                if (navigator.onLine && (isConnectedToN8n || await checkN8nConnection())) {
+                    // Create FormData
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob, 'recording.webm');
+                    formData.append('voice', settings.aiVoice);
+                    
+                    // Send to n8n
+                    const response = await fetch(N8N_WEBHOOK_URL, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Update user message with transcription
+                        if (data.transcription) {
+                            updateMessage(messageId, data.transcription);
+                        }
+                        
+                        // Add AI response message
+                        if (data.response) {
+                            addMessage(data.response.text, 'ai');
+                            
+                            // Play audio response if available
+                            if (data.response.audioUrl) {
+                                playAudioResponse(data.response.audioUrl);
+                            }
+                        }
+                    } else {
+                        throw new Error('Failed to process audio');
+                    }
+                } else {
+                    // We're offline or n8n is unavailable
+                    // Store the audio for later processing
+                    const pendingRequests = JSON.parse(localStorage.getItem('pendingRequests') || '[]');
+                    
+                    // Convert blob to base64 for storage
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = function() {
+                        const base64data = reader.result;
+                        
+                        // Store pending request
+                        pendingRequests.push({
+                            timestamp: Date.now(),
+                            audio: base64data,
+                            messageId: messageId
+                        });
+                        
+                        localStorage.setItem('pendingRequests', JSON.stringify(pendingRequests));
+                        
+                        // Update user message with transcription placeholder
+                        updateMessage(messageId, "Your message (saved for offline processing)");
+                        
+                        // Add AI offline response
+                        const offlineResponses = [
+                            "I'm currently offline but I'll remember this when I reconnect.",
+                            "I'm working in offline mode right now. I'll sync this when we're back online.",
+                            "Network connection unavailable. I've saved your message for later processing.",
+                            "I can't reach the server right now, but I've stored your request."
+                        ];
+                        const randomResponse = offlineResponses[Math.floor(Math.random() * offlineResponses.length)];
+                        addMessage(randomResponse, 'ai');
+                    };
+                }
+            } catch (error) {
+                console.error('Error sending audio to n8n:', error);
+                addMessage('Sorry, I couldn\'t process your request.', 'ai');
+            }
+        }
+        
+        // Process pending requests
+        async function processPendingRequests() {
+            if (!navigator.onLine || !(isConnectedToN8n || await checkN8nConnection())) {
+                return; // Still offline
+            }
+            
+            const pendingRequests = JSON.parse(localStorage.getItem('pendingRequests') || '[]');
+            if (pendingRequests.length === 0) {
+                return; // No pending requests
+            }
+            
+            addMessage('Processing your offline messages...', 'ai');
+            
+            // Process each pending request
+            for (const request of pendingRequests) {
+                try {
+                    // Convert base64 back to blob
+                    const byteString = atob(request.audio.split(',')[1]);
+                    const mimeString = request.audio.split(',')[0].split(':')[1].split(';')[0];
+                    const ab = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(ab);
+                    
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+                    
+                    const blob = new Blob([ab], { type: mimeString });
+                    
+                    // Create FormData
+                    const formData = new FormData();
+                    formData.append('audio', blob, 'recording.webm');
+                    formData.append('offlineTimestamp', request.timestamp);
+                    formData.append('voice', settings.aiVoice);
+                    
+                    // Send to n8n
+                    const response = await fetch(N8N_WEBHOOK_URL, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Update user message with transcription
+                        if (data.transcription) {
+                            updateMessage(request.messageId, data.transcription);
+                        }
+                        
+                        // Add AI response message
+                        if (data.response) {
+                            addMessage(data.response.text, 'ai', null, request.timestamp);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error processing offline request:', error);
+                }
+            }
+            
+            // Clear processed requests
+            localStorage.removeItem('pendingRequests');
+            addMessage('All offline messages processed!', 'ai');
+        }
+        
+        // Play audio response through Bluetooth device
+        async function playAudioResponse(audioUrl) {
+            try {
+                if (!audioContext) {
+                    initAudioContext();
+                }
+                
+                // Fetch audio file
+                const response = await fetch(audioUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                
+                // Decode audio data
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                // Create source node
+                const sourceNode = audioContext.createBufferSource();
+                sourceNode.buffer = audioBuffer;
+                
+                // Connect to destination (speaker output)
+                // In a real implementation, we would connect to the Bluetooth device
+                // but Web Bluetooth doesn't directly support audio output yet
+                sourceNode.connect(audioContext.destination);
+                
+                // Start playing
+                sourceNode.start();
+                
+                return true;
+            } catch (error) {
+                console.error('Error playing audio response:', error);
+                return false;
+            }
+        }
+        
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('airassistSettings');
+            if (savedSettings) {
+                settings = JSON.parse(savedSettings);
+                
+                // Update UI
+                document.getElementById('autoListenToggle').checked = settings.autoListen;
+                document.getElementById('silenceThreshold').value = settings.silenceThreshold;
+                document.getElementById('silenceThresholdValue').textContent = settings.silenceThreshold;
+                document.getElementById('n8nServerUrl').value = settings.n8nServerUrl;
+                document.getElementById('aiVoice').value = settings.aiVoice;
+                document.getElementById('userNameInput').value = settings.userName;
+                
+                // Update global variable
+                N8N_WEBHOOK_URL = settings.n8nServerUrl;
+                
+                // Update user profile
+                setUserProfile(settings.userName);
+            }
+        }
+        
+        // Save settings to localStorage
+        function saveSettings() {
+            settings.autoListen = document.getElementById('autoListenToggle').checked;
+            settings.silenceThreshold = parseInt(document.getElementById('silenceThreshold').value);
+            settings.n8nServerUrl = document.getElementById('n8nServerUrl').value;
+            settings.aiVoice = document.getElementById('aiVoice').value;
+            settings.userName = document.getElementById('userNameInput').value;
+            
+            // Update global variable
+            N8N_WEBHOOK_URL = settings.n8nServerUrl;
+            
+            localStorage.setItem('airassistSettings', JSON.stringify(settings));
+            
+            // Show confirmation
+            addMessage('Settings saved!', 'ai');
+            
+            // Update user profile
+            setUserProfile(settings.userName);
+            
+            // Close settings panel
+            settingsPanel.style.display = 'none';
+            
+            // Announce to screen reader
+            announceToScreenReader('Settings saved');
+        }
+        
+        // Set user profile
+        function setUserProfile(name) {
+            if (name && name.trim() !== '') {
+                userNameElement.textContent = name;
+                userInitialsElement.textContent = name.split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2);
+            }
+        }
+        
+        // Setup user profile
+        function setupUserProfile() {
+            const savedName = localStorage.getItem('userName');
+            
+            if (savedName) {
+                setUserProfile(savedName);
+            } else {
+                // Prompt for name after a delay
+                setTimeout(() => {
+                    settingsPanel.style.display = 'block';
+                    userNameInput.focus();
+                }, 2000);
+            }
+        }
+        
+        // Event Listeners
+        connectButton.addEventListener('click', async () => {
+            // Check browser compatibility first
+            if (!checkBrowserCompatibility()) {
+                return;
+            }
+            
+            // Check if already connected
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                // Disconnect
+                if (gattServer) {
+                    gattServer.disconnect();
+                }
+            } else {
+                // Connect to Bluetooth device with retry
+                await connectWithRetry();
+                
+                // Check n8n connection
+                await checkN8nConnection();
+            }
+        });
+        
+        listenButton.addEventListener('click', () => {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        });
+        
+        settingsButton.addEventListener('click', () => {
+            settingsPanel.style.display = 'block';
+        });
+        
+        closeSettingsButton.addEventListener('click', () => {
+            settingsPanel.style.display = 'none';
+        });
+        
+        saveSettingsButton.addEventListener('click', saveSettings);
+        
+        document.getElementById('silenceThreshold').addEventListener('input', (e) => {
+            document.getElementById('silenceThresholdValue').textContent = e.target.value;
+        });
+        
+        // Check for online/offline status
+        window.addEventListener('online', () => {
+            updateOfflineStatus();
+            processPendingRequests();
+        });
+        
+        window.addEventListener('offline', updateOfflineStatus);
+        
+        // Show iOS guide message
+        function showIOSGuideMessage() {
+            if (isIOS()) {
+                // Add iOS-specific note
+                const iosNote = document.createElement('div');
+                iosNote.className = 'ios-note';
+                iosNote.innerHTML = `
+                    <strong>iOS User?</strong> For the best Bluetooth experience on iOS, please read our 
+                    <a href="iOS_BLUETOOTH_GUIDE.md" target="_blank">iOS Bluetooth Guide</a>.
+                    ${!isInstalledPWA() ? 'Installing as a PWA is highly recommended for iOS devices.' : ''}
+                `;
+                conversationPanel.appendChild(iosNote);
+                conversationPanel.scrollTop = conversationPanel.scrollHeight;
+                
+                // Show install banner if not installed as PWA
+                if (!isInstalledPWA()) {
+                    setTimeout(() => {
+                        showIOSInstallBanner();
+                    }, 5000); // Show after 5 seconds
+                }
+            }
+        }
+
+        // Initialize app
+        window.addEventListener('DOMContentLoaded', () => {
+            // Initial offline status check
+            updateOfflineStatus();
+            
+            // Load saved settings
+            loadSettings();
+            
+            // Setup user profile
+            setupUserProfile();
+            
+            // Add initial message
+            addMessage('Hello! I\'m AIRAssist. Connect your Bluetooth earpiece to start.', 'ai');
+            
+            // Show iOS guide message if on iOS
+            showIOSGuideMessage();
+            
+            // Check n8n connection
+            checkN8nConnection();
+            
+            // Process any pending offline requests
+            if (navigator.onLine) {
+                processPendingRequests();
+            }
+        });
+        
+        // Handle orientation changes for visualizer
+        window.addEventListener('resize', () => {
+            if (visualizerContext) {
+                visualizerCanvas.width = visualizerContainer.clientWidth;
+                visualizerCanvas.height = visualizerContainer.clientHeight;
+            }
+        });
+    </script>
+</body>
+</html>

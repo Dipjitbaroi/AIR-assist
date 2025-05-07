@@ -1,0 +1,26 @@
+{
+  "name": "air-assist",
+  "version": "1.0.0",
+  "description": "AIRAssist is a Progressive Web App (PWA) that enables real-time voice interaction with your AI assistant \"Alli\" through a Bluetooth earpiece. The app captures audio from your earpiece, sends it to your n8n automation with Claude, and plays back the AI responses through your earpiece.",
+  "main": "service-worker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dipjitbaroi/AIR-assist.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dipjitbaroi/AIR-assist/issues"
+  },
+  "homepage": "https://github.com/Dipjitbaroi/AIR-assist#readme",
+  "dependencies": {
+    "@capacitor-community/bluetooth-le": "^7.0.0",
+    "@capacitor/cli": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
+    "@capacitor/ios": "^7.2.0"
+  }
+}

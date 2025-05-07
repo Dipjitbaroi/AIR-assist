@@ -1,0 +1,17 @@
+{
+  "appId": "io.airassist.app",
+  "appName": "AIRAssist",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000
+    }
+  },
+  "server": {
+    "iosScheme": "ionic"
+  },
+  "ios": {
+    "contentInset": "always"
+  }
+}
